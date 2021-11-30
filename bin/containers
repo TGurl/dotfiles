@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+
+import os
+import sys
+from shutil import get_terminal_size
+from colors import *
+
+
+def clear():
+    if os.name == 'nt':
+        os.system('cls')
+    else:
+        os.system('clear')
+
+
+def print_title(title, max_width):
+    yel = Colors.fgBrightYellow
+    res = Colors.reset
+    char = "─"
+
+    title = f" {title} "
+    columns = get_terminal_size().columns
+    if columns > max_width:
+        columns = max_width
+
+    line = int((columns - len(title)) / 2) * char
+    title = f"{yel}{title}{res}"
+    print(f"{line}{title}{line}")
+
+
+def get_containers() -> list:
+    cunt_folder = '/data/containers'
+    containers = []
+
+    for folder in os.scandir(cunt_folder):
+        if not folder.name.startswith('.') and not folder.name.startswith('_'):
+            containers.append(folder.name)
+    containers.sort()
+
+    return containers
+
+
+def spawn(container) -> None:
+    path = f"/data/containers/{container}"
+    cmd = f"sudo systemd-nspawn -b -D {path}"
+    os.system(cmd)
+    #clear()
+    #print("Thanks for using my cunt...")
+    #sys.exit(0)
+
+
+def menu(containers: list) -> None:
+    gre = Colors.fgBrightGreen
+    yel = Colors.fgBrightYellow
+    red = Colors.fgRed
+    res = Colors.reset
+    number_of_containers = len(containers)
+
+    keys_allowed = []
+    for c in range(0, number_of_containers):
+        keys_allowed.extend(str(c + 1))
+    keys_allowed.extend("q")
+
+    prompt = f"({yel}containers) {gre}❯{res} "
+    eprompt = f"({yel}containers) {red}❯{res} "
+
+    running = True
+    while running:
+        clear()
+        print_title("Containers v3.0", 40)
+
+        for count, cunt in enumerate(containers):
+            count += 1
+            print(f"{yel}{count}{res}. {cunt}")
+
+        print()
+        print(f"{yel}q{res}. Don't want to use any of them.")
+        print()
+
+        answer = input(prompt).lower()
+        if answer not in keys_allowed:
+            print(f"{eprompt}Please use one of the keys above.")
+            print()
+        if answer in ['q', 'quit']:
+            running = False
+        elif answer in keys_allowed:
+            cunt = int(answer) - 1
+            spawn(containers[cunt])
+
+    clear()
+    print(f"Bye.")
+
+
+def main():
+    containers = get_containers()
+    menu(containers)
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
