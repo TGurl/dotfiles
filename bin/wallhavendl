@@ -1,0 +1,322 @@
+#!/usr/bin/env python
+
+# Wallhave.cc download script
+# This is a simple script which makes it possible to download
+# random images from Wallhaven.cc, based upon a query.
+
+
+# Images will be downloaded to a standard folder to enable
+# you to sort/remove the downloaded images.
+
+import os
+import re
+import sys
+import signal
+import random
+import string
+import requests
+import subprocess
+
+from dataclasses import dataclass
+from time import sleep
+
+class Colors:
+    """
+    Colors for the CLI
+    Usage:
+        print(colors.fgRed + "Text" + colors.reset)
+    """
+    reset = "\033[0m"
+    # Black
+    fgBlack = "\033[30m"
+    fgBrightBlack = "\033[30;1m"
+    bgBlack = "\033[40m"
+    bgBrightBlack = "\033[40;1m"
+    # Red
+    fgRed = "\033[31m"
+    fgBrightRed = "\033[31;1m"
+    bgRed = "\033[41m"
+    bgBrightRed = "\033[41;1m"
+    # Green
+    fgGreen = "\033[32m"
+    fgBrightGreen = "\033[32;1m"
+    bgGreen = "\033[42m"
+    bgBrightGreen = "\033[42;1m"
+    # Yellow
+    fgYellow = "\033[33m"
+    fgBrightYellow = "\033[33;1m"
+    bgYellow = "\033[43m"
+    bgBrightYellow = "\033[43;1m"
+    # Blue
+    fgBlue = "\033[34m"
+    fgBrightBlue = "\033[34;1m"
+    bgBlue = "\033[44m"
+    bgBrightBlue = "\033[44;1m"
+    # Magenta
+    fgMagenta = "\033[35m"
+    fgBrightMagenta = "\033[35;1m"
+    bgMagenta = "\033[45m"
+    bgBrightMagenta = "\033[45;1m"
+    # Cyan
+    fgCyan = "\033[36m"
+    fgBrightCyan = "\033[36;1m"
+    bgCyan = "\033[46m"
+    bgBrightCyan = "\033[46;1m"
+    # White
+    fgWhite = "\033[37m"
+    fgBrightWhite = "\033[37;1m"
+    bgWhite = "\033[47m"
+    bgBrightWhite = "\033[47;1m"
+
+
+class Message:
+    def echo(msg):
+        print(msg)
+
+    def yellow(msg):
+        print(Colors.fgBrightYellow + msg + Colors.reset)
+
+    def message(msg):
+        print(Colors.fgBrightYellow + "==> " + Colors.reset + msg)
+
+    def err(msg):
+        print(Colors.fgBrightRed + "--> " + Colors.reset + msg)
+
+    def warning(msg):
+        print(Colors.fgBrightBlue + "==> " + Colors.reset + msg)
+
+    def yn(question, default_no=False):
+        choices = ' [y/N]: ' if default_no else ' [Y/n]: '
+        default_answer = 'n' if default_no else 'y'
+        reply = str(input(question + choices)
+                    ).lower().strip() or default_answer
+        if reply[0] == 'y':
+            return True
+        if reply[0] == 'n':
+            return False
+        else:
+            return False if default_no else True
+
+
+class Tools:
+    def clear():
+        if os.name == 'nt':
+            os.system('cls')
+        else:
+            os.system('clear')
+
+    def show_title():
+        Message.echo("------------------------------------")
+        Message.yellow(" Wallhaven.cc Image Downloader v2.0")
+        Message.echo("------------------------------------")
+
+    def get_screen_dimensions():
+        xrandrOutput = str(subprocess.Popen(
+            ['xrandr'], stdout=subprocess.PIPE).communicate()[0])
+        matchObj = re.findall(r'current\s(\d+) x (\d+)', xrandrOutput)
+        if matchObj:
+            screenwidth = str(int(matchObj[0][0]))
+            screenheight = str(int(matchObj[0][1]))
+        return screenwidth + "x" + screenheight
+
+
+@dataclass
+class Settings:
+    api_key: str
+    api_url: str
+    categories: str
+    purity: str
+    colors: str
+    query: str
+    sorting: str
+    atleast: str
+    order: str
+    ratios: str
+    swf: bool
+    sketchy: bool
+    nsfw: bool
+    general: bool
+    anime: bool
+    people: bool
+    aspect16x9: bool
+    basedir: str
+
+
+class Wallhaven:
+    def construct_api_url():
+        seed = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 10))
+        apiurl = "https://wallhaven.cc/api/v1/search?" \
+            + "apikey=" + Settings.api_key + "&" \
+            + "q=" + Settings.query + "&" \
+            + "categories=" + Settings.categories + "&" \
+            + "purity=" + Settings.purity + "&" \
+            + "colors=" + Settings.colors + "&" \
+            + "sorting=" + Settings.sorting + "&" \
+            + "atleast=" + Settings.atleast + "&" \
+            + "ratios=" + Settings.ratios + "&" \
+            + "seed=" + seed
+
+        return apiurl
+
+    def set_defaults():
+        Settings.colors = ''
+        Settings.sorting = 'random'
+        Settings.order = 'asc'
+        # remember to remove api key!!!!!!
+        Settings.api_key = "T52VzHkgEfpJiHTXa9KWujymq3LC2EK0"
+        Settings.basedir = "/data/pictures/downloads/from_wallhaven"
+
+    def set_optionals():
+        categories = list('000')
+        if Settings.general:
+            categories[0] = '1'
+        if Settings.anime:
+            categories[1] = '1'
+        if Settings.people:
+            categories[2] = '1'
+
+        purity = list('000')
+        if Settings.sfw:
+            purity[0] = '1'
+        if Settings.sketchy:
+            purity[1] = '1'
+        if Settings.nsfw:
+            purity[2] = '1'
+
+        Settings.purity = ''.join(purity)
+        Settings.categories = ''.join(categories)
+
+        if Settings.aspect16by9:
+            Settings.ratios = "16x9"
+        else:
+            Settings.ratios = ""
+
+        # get the current screen resolution
+        if Settings.myresolution:
+            Settings.atleast = Tools.get_screen_dimensions()
+        else:
+            Settings.atleast = ""
+
+    def fetch_file():
+        response = requests.get(Settings.api_url)
+        return response.json()
+
+    def parse_data(data):
+        Message.message("Downloading: " + str(len(data)) + " images.")
+        for d in data:
+            path = d['path']
+            temp = path.replace('https://', '')
+            temp = temp.split("/")
+            filename = temp[3]
+            Wallhaven.write_image(path, filename)
+
+    def questionaire():
+        Tools.show_title()
+        query = input("What shoud I search for? : ")
+
+        if query.lower() in ['q', 'quit']:
+            Message.message("Okay, okay, okay, bye.")
+            sys.exit(0)
+
+        maxcount = input("How many rounds should I search for? : ")
+        Settings.general = Message.yn("Enable General? : ", default_no=True)
+        Settings.anime = Message.yn("Enable Anime? : ", default_no=True)
+        Settings.people = Message.yn("Enable People? : ", default_no=False)
+        Settings.sfw = Message.yn("Enable SWF? : ", default_no=True)
+        Settings.sketchy = Message.yn("Enable Sketchy? : ", default_no=True)
+        Settings.nsfw = Message.yn("Enable NSFW? : ", default_no=False)
+        Settings.aspect16by9 = Message.yn("Only 16x9? : ", default_no=False)
+
+        _res = Tools.get_screen_dimensions()
+        Settings.myresolution = Message.yn(
+            "Minimal resolution " + _res + "? : ", default_no=False)
+
+        return maxcount, query
+
+    def delete_images():
+        path = Settings.basedir
+        delete = Message.yn("Delete the images?", default_no=False)
+
+        if delete:
+            jpg_files = [f for f in os.listdir(path) if f.endswith('.jpg')]
+            png_files = [f for f in os.listdir(path) if f.endswith('.png')]
+
+            imagelist = []
+            imagelist.extend(jpg_files)
+            imagelist.extend(png_files)
+
+            for image in imagelist:
+                if os.path.isfile(image) or os.path.islink(image):
+                    os.unlink(image)
+            return True
+        else:
+            return False
+
+
+    def write_image(image_url, filename):
+        """Writes data from url to image file."""
+        path = os.path.join(Settings.basedir, filename)
+        if os.path.isfile(path):
+            Message.err("File " + filename + " already downloaded")
+            return False
+
+        Message.message("Writing " + filename)
+        img_data = requests.get(image_url).content
+        with open(path, 'wb') as handler:
+            handler.write(img_data)
+        return True
+
+
+def main_loop():
+    Tools.clear()
+    Wallhaven.set_defaults()
+    maxcount, query = Wallhaven.questionaire()
+
+    if maxcount == '0' or maxcount == '':
+        maxcount = 2
+    else:
+        maxcount = int(maxcount)
+
+    Settings.query = query.lower().strip()
+    Wallhaven.set_optionals()
+    Settings.api_url = Wallhaven.construct_api_url()
+
+    # -- main loop
+    count = 1
+    while count <= maxcount:
+        Tools.clear()
+        Tools.show_title()
+        # json = Wallhaven.fetch_file()
+        # data = json['data']
+        data = Wallhaven.fetch_file()['data']
+        if len(data) == 0:
+            Message.err('No results found... sorry!')
+            return None
+
+        # Wallhaven returns 24 random images by default, what if
+        # it returns less than 24 images, we can only loop once
+        # then.
+        if len(data) < 24:
+            maxcount = 1
+
+        Message.warning("Round " + str(count) + "/" + str(maxcount))
+        Wallhaven.parse_data(data)
+        count += 1
+
+    Tools.clear()
+    Tools.show_title()
+    Message.message('Done!')
+
+
+def main():
+    running = True
+    while running:
+        main_loop()
+        result = Wallhaven.delete_images()
+        running = Message.yn("Want to go again?", default_no=False)
+
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
