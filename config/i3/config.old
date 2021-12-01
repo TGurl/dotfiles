@@ -47,9 +47,9 @@ set $compositor         picom --config $HOME/.config/picom/picom-ibhagwan.conf
 # set $compositor         picom --config $HOME/.config/picom/picom.conf
 # set $compositor         compton --config $HOME/.config/compton/compton.conf
 # set $restore_wallpaper  nitrogen --restore
-set $restore_wallpaper  $HOME/.fehbg
-#set $restore_wallpaper  $HOME/.bin/ranwall sfw
-#set $restore_wallpaper  $HOME/.bin/ranwall all
+#set $restore_wallpaper  $HOME/.fehbg
+#set $restore_wallpaper  $HOME/.bin/rw sfw
+set $restore_wallpaper  $HOME/.bin/rw nsfw
 set $autotiling		autotiling
 set $numlockx		numlockx
 set $unclutter          unclutter --timeout 15
@@ -58,13 +58,12 @@ set $powermenu    $HOME/.bin/powermenu.sh
 set $dmenu        $HOME/.bin/dmenu-run.sh
 set $m9           $HOME/.bin/mightynein
 set $c3           $HOME/.bin/campaign3
-set $exu          $HOME/.bin/exu
 
 #set $books        $HOME/.bin/books
 #set $randomsfw	  $HOME/.bin/randomsfw
 #set $randomnsfw   $HOME/.bin/randomnsfw
-set $randomsfw    $HOME/.bin/ranwall sfw
-set $randomnsfw   $HOME/.bin/ranwall nsfw
+set $randomsfw    $HOME/.bin/rw sfw
+set $randomnsfw   $HOME/.bin/rw nsfw
 set $disable_dpms   $HOME/.bin/disable_screensaver.sh
 
 ## -- settings for the status bar
@@ -99,12 +98,11 @@ for_window [class="^.*"] border pixel 0
 
 ## ---- assigned to workspace 2
 #assign [class="code|Code"] $ws2
-assign [class="gdlauncher*"] $ws2
+assign [class="Minecraft*"] $ws2
 
 ## ---- assigned to workspace 3
 #assign [class="pcmanfm|Pcmanfm"] $ws3
 #assign [class="thunar|Thunar"] $ws3
-assign [class="Minecraft*"] $ws3
 
 ## ---- assigned to workspace 4
 #assign [class="gimp|Gimp"] $ws4
@@ -149,7 +147,6 @@ bindsym $mod+Shift+c gaps inner current set $gaps_inner gaps outer current set $
 bindsym $mod+d exec --no-startup-id         $dmenu
 bindsym $mod+m exec --no-startup-id         $m9
 bindsym $mod+c exec --no-startup-id         $c3
-bindsym $mod+e exec --no-startup-id         $exu
 bindsym $mod+Shift+e exec --no-startup-id   $powermenu
 
 ## ------ change wallpaper
@@ -159,7 +156,7 @@ bindsym $mod+F9 exec --no-startup-id         $randomnsfw
 ## ------ default i3 keybindings
 bindsym $mod+Shift+q 		kill
 bindsym $mod+f 			fullscreen toggle
-#bindsym $mod+e 			layout toggle splitv splith tabbed stacking
+bindsym $mod+e 			layout toggle splitv splith tabbed stacking
 bindsym $mod+space 		floating toggle
 bindsym $mod+Shift+space 	focus mode_toggle
 
