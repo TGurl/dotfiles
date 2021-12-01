@@ -4,7 +4,7 @@ import os
 import sys
 import random
 
-#from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE
 #from time import sleep
 
 def get_current_wallpaper():
@@ -48,8 +48,26 @@ def set_wall(walltype: str):
         wallpaper = random.choice(walls)
         wallname = wallpaper.split("/")[-1]
 
-    command = f"feh --bg-scale {wallpaper}"
-    os.system(command)
+    destination = "/usr/share/sddm/themes/mywall/Backgrounds/mywall.png"
+
+    if ".png" in wallname:
+        sudo_cmd = f"cp {wallpaper} {destination}".split()
+    else:
+        sudo_cmd = f"convert {wallpaper} {destination}".split()
+
+    with open('/home/geertje/.sddm_wall/pword.txt') as file:
+        sudo_pass = file.read().splitlines()[0]
+
+    feh_cmd = f"feh --bg-scale {wallpaper}"
+    os.system(feh_cmd)
+
+    args = ['sudo', '-S']
+    p = Popen(args + sudo_cmd,
+            stdin=PIPE,
+            stderr=PIPE,
+            universal_newlines=True)
+    _ = p.communicate(sudo_pass + '\n')[1]
+    print(_)
 
 
 def main(walltype: str):
