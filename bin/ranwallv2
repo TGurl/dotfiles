@@ -78,15 +78,15 @@ class Wallpaper:
     def set_wallpaper(self, walltype: str):
         wallpapers = self.generate_wallpaperlist(walltype)
         wallpaper = self.read_fehbg()
-        notify = "notify-send -u low 'wallpaper set to "
+        # notify = "notify-send -u low 'wallpaper set to "
 
 
         while wallpaper == self.read_fehbg():
             wallpaper = choice(wallpapers)
-            notify += wallpaper.split('/')[-1] + "'"
+            # notify += wallpaper.split('/')[-1] + "'"
 
         os.system(f"feh --bg-scale {wallpaper}")
-        os.system(notify)
+        # os.system(notify)
         self.change_sddm_background(wallpaper)
 
 
