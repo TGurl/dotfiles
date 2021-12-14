@@ -103,17 +103,19 @@ def main():
     ans = ''
     answered = False
     while not answered:
-        ans = input("\tWhich theme do you want to use? : ")
+        ans = input("Which theme do you want to use? : ")
         if not ans.isdigit():
-            print("\tPlease answer with any of the numbers above.")
+            print("> Please answer with any of the numbers above.")
+            print()
         elif (int(ans) - 1) > int(count):
-            print("\tThat theme doesn't exist...")
+            print("> That theme doesn't exist...")
+            print()
         else:
             answered = True
 
 
     if int(ans) == 0:
-        os.system('clear')
+        print()
         print('Bye...')
         exit()
     else:
