@@ -3,7 +3,10 @@
 import os
 import sys
 from shutil import get_terminal_size
+from subprocess import Popen, PIPE
 from colors import *
+
+from time import sleep
 
 
 def clear():
@@ -39,14 +42,46 @@ def get_containers() -> list:
 
     return containers
 
+def read_pword():
+    userdir = os.path.expanduser('~')
+    pword_file = '.config/ranwall/pword.txt'
+    path = os.path.join(userdir, pword_file)
+    with open(path, 'r') as file:
+        pword = file.read().splitlines()[0]
+    return pword
+
+
+def do_sudo_cmd(command):
+    pword = read_pword()
+    p = Popen(command, stdin=PIPE, stderr=PIPE,
+            universal_newlines=True)
+    _ = p.communicate(pword + "\n")[1]
+
+
+def create_container():
+    gre = Colors.fgBrightGreen
+    yel = Colors.fgBrightYellow
+    red = Colors.fgRed
+    res = Colors.reset
+    cunt_path = "/data/containers"
+    new_cunt = input("New container name: ")
+    cmd = f"mkdir /data/containers/{new_cunt}"
+    os.system(cmd)
+    args = ['sudo', '-S']
+    cmd = "pacstrap -c /data/containers/{new_cunt}".split()
+    do_sudo_cmd(args + cmd)
+
+    cmd = f"systemd-nspawn -D /data/containers/{new_cunt}".split()
+    print("> Please set root password.")
+    do_sudo_cmd(args + cmd)
+
 
 def spawn(container) -> None:
     path = f"/data/containers/{container}"
-    cmd = f"sudo systemd-nspawn -b -D {path}"
-    os.system(cmd)
-    #clear()
-    #print("Thanks for using my cunt...")
-    #sys.exit(0)
+    cmd = f"systemd-nspawn -b -D {path}"
+    #os.system(cmd)
+    args = ['sudo', '-S']
+    os.system('sudo ' + cmd)
 
 
 def menu(containers: list) -> None:
@@ -59,7 +94,7 @@ def menu(containers: list) -> None:
     keys_allowed = []
     for c in range(0, number_of_containers):
         keys_allowed.extend(str(c + 1))
-    keys_allowed.extend("q")
+    keys_allowed.extend(["q", "c"])
 
     prompt = f"({yel}containers) {gre}❯{res} "
     eprompt = f"({yel}containers) {red}❯{res} "
@@ -71,9 +106,10 @@ def menu(containers: list) -> None:
 
         for count, cunt in enumerate(containers):
             count += 1
-            print(f"{yel}{count}{res}. {cunt}")
+            print(f"{yel}{count:2d}{res}. {cunt}")
 
         print()
+        print(f"{yel}c{res}. Create a new container.")
         print(f"{yel}q{res}. Don't want to use any of them.")
         print()
 
@@ -83,6 +119,8 @@ def menu(containers: list) -> None:
             print()
         if answer in ['q', 'quit']:
             running = False
+        elif answer in ['c', 'create']:
+            create_container()
         elif answer in keys_allowed:
             cunt = int(answer) - 1
             spawn(containers[cunt])

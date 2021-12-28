@@ -8,7 +8,8 @@ from subprocess import Popen, PIPE
 
 class Wallpaper:
     def __init__(self):
-        self.userdir = os.path.expanduser('~')
+        #self.userdir = os.path.expanduser('~')
+        self.userdir = '/home/geertje'
         self.fehbg = os.path.join(self.userdir, '.fehbg')
         self.picdir = os.path.join(self.userdir, 'Pictures')
         self.walldir = os.path.join(self.picdir, 'walls')

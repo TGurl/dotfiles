@@ -75,10 +75,10 @@ class Settings:
     atleast: str
     order: str
     ratios: str
-    sfw: str
-    sketchy: str
-    nsfw: str
-    resolution: str
+    sfw: bool
+    sketchy: bool
+    nsfw: bool
+    resolution: bool
     general: bool
     anime: bool
     people: bool
@@ -114,7 +114,7 @@ def set_defaults():
     Settings.sorting = 'random'
     Settings.order = 'asc'
     Settings.api_key = "T52VzHkgEfpJiHTXa9KWujymq3LC2EK0"
-    Settings.basedir = "/data/pictures/downloads/from_wallhaven/"
+    Settings.basedir = "/data/pictures/walls/downloads"
 
 
 def set_optionals():
@@ -161,7 +161,10 @@ def get_screen_dimensions():
 
 
 def yesno(question, default_no=False):
-    choices = ' [y/N]: ' if default_no else ' [Y/n]: '
+    yel = Colors.fgBrightYellow
+    res = Colors.reset
+
+    choices = f" [y/{yel}N{res}]: " if default_no else f" [{yel}Y{res}/n]: "
     default_answer = 'y' if default_no else 'n'
     msg = f"{question}{choices}"
     reply = str(input(msg)).lower().strip() or default_answer
@@ -219,28 +222,26 @@ def info(msg):
 def error(msg):
     red = Colors.fgBrightRed
     res = Colors.reset
-    print(f"{red}-->{res} {msg}")
+    print(f"-> {red}{msg}{res}")
 
 
 def warning(msg):
     gre = Colors.fgBrightGreen
     res = Colors.reset
-    print(f"{gre}==>{res} {msg}")
+    print(f"{gre}=>{res} {msg}")
 
 
-def message(msg):
+def message(msg, nl=True):
     yel = Colors.fgBrightYellow
     res = Colors.reset
-    print(f"{yel}==>{res} {msg}")
+    if not nl:
+        print(f"{yel}=>{res} {msg}", end='')
+    else:
+        print(f"{yel}=>{res} {msg}")
 
 
 def write_image(image_url, filename):
     path = os.path.join(Settings.basedir, filename)
-    if os.path.isfile(path):
-        error(f"File {filename} already exists!")
-        return False
-
-    message(f"Writing {filename}...")
     img_data = requests.get(image_url).content
     with open(path, 'wb') as handler:
         handler.write(img_data)
@@ -248,17 +249,30 @@ def write_image(image_url, filename):
 
 
 def parse_data(data):
-    num = len(data)
-    message(f"Downloading: {num} images.")
-    for d in data:
-        path = d['path']
-        temp = path.replace('https://', '')
+    yel = Colors.fgBrightYellow
+    gre = Colors.fgBrightGreen
+    res = Colors.reset
+
+    for count, d in enumerate(data):
+        url = d['path']
+        temp = url.replace('https://', '')
         temp = temp.split("/")
         filename = temp[3]
-        write_image(path, filename)
+        c = count + 1
+        message(f"Writing image {yel}{c:02d}{res}/{yel}24{res} ", nl=False)
+        path = os.path.join(Settings.basedir, filename)
+        if os.path.isfile(path) or os.path.islink(path):
+            error(f"{filename}.")
+        else:
+            print(f"-> {gre}{filename}{res}.")
+            write_image(url, path)
 
 
 def main_loop():
+    gre = Colors.fgBrightGreen
+    yel = Colors.fgBrightYellow
+    res = Colors.reset
+
     set_defaults()
     show_title()
     maxcount, query = questionaire()
@@ -284,8 +298,8 @@ def main_loop():
         if len(data) < 24:
             maxcount = 1
 
-        info(f"Query: {Settings.query}")
-        info(f"Round {count} / {maxcount}")
+        info(f"Query: {gre}{Settings.query}{res}")
+        info(f"Round: {yel}{count:02d}{res}/{yel}{maxcount:02d}{res}")
         parse_data(data)
         count += 1
 
@@ -296,7 +310,7 @@ def main_loop():
 
 def delete_images():
     path = Settings.basedir
-    delete = yesno("Delete images?", default_no=False)
+    delete = yesno("Delete images?", default_no=True)
 
     if delete:
         jpg_files = [f for f in os.listdir(path) if f.endswith('.jpg')]
@@ -324,4 +338,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_loop()

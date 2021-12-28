@@ -77,7 +77,7 @@ def main():
         print("Sorry, no images found.")
         exit()
 
-    message(f"Processiong...")
+    message(f"Processing...")
     for img in imagelist:
         image = Image.open(img)
         width, height = image.size

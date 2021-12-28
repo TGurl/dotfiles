@@ -35,7 +35,7 @@ class SDDMThemer:
         themes = self.list_folders()
         for c, name in enumerate(themes):
             t = c + 1
-            print(f"\t{t}. {name}")
+            print(f"\t{t:2d}. {name}")
 
         print()
         print(f"\t0. do not change theme")
