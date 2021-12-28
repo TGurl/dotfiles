@@ -13,8 +13,13 @@ def clear():
     os.system('clear')
 
 
+def set_wm_class(title):
+  print(f'\x1b]0;{title}\x07')
+
+
 def wait_for_enter():
     _ = input('Press [ENTER]...')
+
 
 def show_title():
     yel = Colors.fgBrightYellow
@@ -140,6 +145,7 @@ def copy_template():
 
 def main():
     """The main loop."""
+    set_wm_class('wrtr')
     answer = show_menu()
 
     if answer == 'q':
