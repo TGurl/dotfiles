@@ -62,8 +62,26 @@ def create_image_list():
     return imagelist
 
 
+def convertpng():
+    cwd = os.getcwd()
+    png = [f for f in os.listdir(cwd) if f.endswith('.png')]
+
+    if len(png):
+        message(f"Converting PNG to JPG...")
+        os.system("mogrify -format jpg *.png")
+        os.system("rm *.png")
+    else:
+        error("No PNG images found.")
+
+
 def message(msg):
     col = Colors.fgBrightYellow
+    res = Colors.reset
+    print(f"{col}==>{res} {msg}")
+
+
+def error(msg):
+    col = Colors.fgBrightRed
     res = Colors.reset
     print(f"{col}==>{res} {msg}")
 
@@ -71,6 +89,8 @@ def message(msg):
 def main():
     os.system('clear')
     print(f"{Colors.fgGreen}-= Resizer =-{Colors.reset}")
+    convertpng()
+
     count = 0
     imagelist = create_image_list()
     if len(imagelist) == 0:
@@ -90,7 +110,7 @@ def main():
             os.unlink(old_image)
             count += 1
 
-    message(f"Number of images resized: {count}")
+    message(f"Number of images resized: {Colors.fgBrightGreen}{count}{Colors.reset}")
     print()
 
 if __name__ == '__main__':
